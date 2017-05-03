@@ -27,7 +27,9 @@ class PersonController extends Controller
     {
         $em = $this->getDoctrine()->getManager();
 
-        //***** Here i want to use GET /api/persons/
+        //************************************************
+        //***** Here i want to use GET /api/persons/ *****
+        //************************************************
 
         //------------------ Why does this not work? ------------------//
 //        $personController = new \ApiBundle\Controller\PersonController();
@@ -37,6 +39,8 @@ class PersonController extends Controller
         $content = $response->getContent();
 
         $people = json_decode($content, true);
+
+        // it gives me this array
 //        array:2 [▼
 //              0 => array:4 [
 //                "id" => 1
@@ -52,8 +56,8 @@ class PersonController extends Controller
 //              ]
 //        ]
 
-
-//        $people = $em->getRepository('AppBundle:Person')->findAll();
+        //------------------ Using Doctrine ------------------//
+        $people = $em->getRepository('AppBundle:Person')->findAll();
 
         return $this->render('person/index.html.twig', array(
             'people' => $people, //???
@@ -73,25 +77,40 @@ class PersonController extends Controller
      */
     public function editAction(Request $request, int $id)
     {
-        $response = $this->forward('ApiBundle:Person:getOne', [
-            'id' => $id
-        ]);
-        $content = $response->getContent();
-        $serializer = $this->get('jms_serializer');
-        $person = $serializer->deserialize($content, Person::class, 'json');
+        $em = $this->getDoctrine()->getManager();
+
+        //if i get a Person with this line, when i save it it creates a new row instead of updating the existing one
+//        $person = $this->getPerson($id);
+
+        $person = $em->getRepository('AppBundle:Person')
+            ->findOneBy([
+                'id' => $id
+            ]);
 
         $deleteForm = $this->createDeleteForm($person);
         $editForm = $this->createForm(PersonType::class, $person);
         $editForm->handleRequest($request);
 
         if ($editForm->isSubmitted() && $editForm->isValid()) {
+            $person = $editForm->getData();
 
-            //***** Here i want to use PUT /api/persons/{id}
+            //****************************************************
+            //***** Here i want to use PUT /api/persons/{id} *****
+            //****************************************************
+
+            //------------------ Why does this not work? ------------------//
+//        $personController = new \ApiBundle\Controller\PersonController();
+//        $people = $personController->getAllAction();
+
+            //------------------ How do I pass the $person to that action? ------------------//
 //            $response = $this->forward('ApiBundle:Person:edit', [
+//                'request' => $request,
 //                'id' => $id
 //            ]);
 
-            $this->getDoctrine()->getManager()->flush();
+            //------------------ Using Doctrine ------------------//
+            $em->persist($person);
+            $em->flush();
 
             return $this->redirectToRoute('person_edit', array('id' => $person->getId()));
         }
@@ -120,8 +139,11 @@ class PersonController extends Controller
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            //***** Here i want to use POST /api/persons/new
+            //****************************************************
+            //***** Here i want to use POST /api/persons/new *****
+            //****************************************************
 
+            //------------------ Using Doctrine ------------------//
             $em = $this->getDoctrine()->getManager();
             $em->persist($person);
             $em->flush();
@@ -147,13 +169,8 @@ class PersonController extends Controller
     public function showAction(int $id)
     {
         //***** Here i want to use GET /api/persons/{id}
-
-        $response = $this->forward('ApiBundle:Person:getOne', [
-            'id' => $id
-        ]);
-        $content = $response->getContent();
-        $serializer = $this->get('jms_serializer');
-        $person = $serializer->deserialize($content, Person::class, 'json');
+        // this solution seems to work
+        $person = $this->getPerson($id);
 
         //------------------ Why does this not work? ------------------//
 //        $personController = new \ApiBundle\Controller\PersonController();
@@ -175,19 +192,34 @@ class PersonController extends Controller
      *
      * @Route("/{id}", name="person_delete")
      * @Method("DELETE")
+     *
+     * @param $request Request
+     * @param $id int
+     * @return Response
      */
-    public function deleteAction(Request $request, Person $person)
+    public function deleteAction(Request $request, int $id)
     {
+        $person = $this->getPerson($id);
+
         $form = $this->createDeleteForm($person);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
 
             //***** Here i want to use DELETE /api/persons/{id}
+            // this solution seems to work
+            $response = $this->forward('ApiBundle:Person:delete', [
+                'id' => $id
+            ]);
 
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($person);
-            $em->flush();
+            //------------------ Why does this not work? ------------------//
+//            $personController = new \ApiBundle\Controller\PersonController();
+//            $response = $personController->deleteAction($id);
+
+            //------------------ Using Doctrine ------------------//
+//            $em = $this->getDoctrine()->getManager();
+//            $em->remove($person);
+//            $em->flush();
         }
 
         return $this->redirectToRoute('person_index');
@@ -206,5 +238,21 @@ class PersonController extends Controller
             ->setAction($this->generateUrl('person_delete', array('id' => $person->getId())))
             ->setMethod('DELETE')
             ->getForm();
+    }
+
+    /**
+     * @param int $id
+     * @return array|\JMS\Serializer\scalar|mixed|object
+     */
+    private function getPerson(int $id)
+    {
+        $response = $this->forward('ApiBundle:Person:getOne', [
+            'id' => $id
+        ]);
+        $content = $response->getContent();
+        $serializer = $this->get('jms_serializer');
+        $person = $serializer->deserialize($content, Person::class, 'json');
+
+        return $person;
     }
 }

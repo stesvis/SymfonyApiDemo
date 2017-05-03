@@ -37,7 +37,7 @@ class PersonController extends Controller
             $response->headers->set('Content-Type', 'application/json');
 
             return $response;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return new JsonResponse($e->getMessage(), JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -61,7 +61,7 @@ class PersonController extends Controller
 
             // Check if it exists
             if (!$person) {
-                return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_OK);
+                return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_NO_CONTENT);
                 //            throw $this->createNotFoundException(sprintf('No person found with Id = ' . $id));
             }
 
@@ -70,7 +70,7 @@ class PersonController extends Controller
             $response->headers->set('Content-Type', 'application/json');
 
             return $response;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return new JsonResponse($e->getMessage(), JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -94,12 +94,12 @@ class PersonController extends Controller
                 ]);
 
             if (!$person) {
-                return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_OK);
+                return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_NO_CONTENT);
                 //            throw $this->createNotFoundException(sprintf('No person found with Id = ' . $id));
             }
 
             return $this->processForm($request, $person);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return new JsonResponse($e->getMessage(), JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -115,7 +115,7 @@ class PersonController extends Controller
     {
         try {
             return $this->processForm($request, new Person());
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return new JsonResponse($e->getMessage(), JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -137,7 +137,7 @@ class PersonController extends Controller
                 ]);
 
             if (!$person) {
-                return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_OK);
+                return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_NO_CONTENT);
                 //            throw $this->createNotFoundException(
                 //                'No person found with Id = ' . $id
                 //            );
@@ -148,12 +148,10 @@ class PersonController extends Controller
             $em->flush();
 
             $response = new JsonResponse("Person deleted", JsonResponse::HTTP_OK);
-            $response->headers->set('Location', $this->generateUrl('person_show', [
-                'id' => $person->getId()
-            ]));
+            $response->headers->set('Location', $this->generateUrl('person_index'));
 
             return $response;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return new JsonResponse($e->getMessage(), JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
