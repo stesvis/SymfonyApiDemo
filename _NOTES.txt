@@ -1,0 +1,16 @@
+OAUTH
+-----
+
+client_id:  1_2fmhkitkyrdwg04wgo8cgc4kkogcwsck0o4s4cgogww8wowggw
+secret:     4po1ddp2wzokosogokgs84wsckg00os0o08og044ck4k8k004k
+
+
+
+GET THE TOKEN
+-------------
+
+http://localhost:8000/app_dev.php/oauth/v2/token?client_id=1_2fmhkitkyrdwg04wgo8cgc4kkogcwsck0o4s4cgogww8wowggw&client_secret=4po1ddp2wzokosogokgs84wsckg00os0o08og044ck4k8k004k&grant_type=password&username=admin&password=password
+
+and then
+
+Authorization: Bearer <token>
