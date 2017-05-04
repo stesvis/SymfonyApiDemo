@@ -1,6 +1,13 @@
 OAUTH
 -----
 
+GENERATE CLIENT_ID AND SECRET
+-----------------------------
+
+bin/console acme:oauth-server:client:create --redirect-uri="http://stesvis.com" --grant-type="authorization_code" --grant-type="password" --grant-type="refresh_token" --grant-type="token" --grant-type="client_credentials"
+
+>>>
+
 client_id:  1_2fmhkitkyrdwg04wgo8cgc4kkogcwsck0o4s4cgogww8wowggw
 secret:     4po1ddp2wzokosogokgs84wsckg00os0o08og044ck4k8k004k
 
