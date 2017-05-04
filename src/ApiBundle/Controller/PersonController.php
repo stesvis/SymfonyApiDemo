@@ -27,9 +27,8 @@ class PersonController extends Controller
     public function getAllAction()
     {
         try {
-            $em = $this->getDoctrine()->getManager();
-            $persons = $em->getRepository('AppBundle:Person')
-                ->findAll();
+            $personsManager = $this->get('persons.manager');
+            $persons = $personsManager->getAllPersons();
 
             $serializer = $this->get('jms_serializer');
 
@@ -52,17 +51,12 @@ class PersonController extends Controller
     public function getOneAction(int $id)
     {
         try {
-            $em = $this->getDoctrine()->getManager();
-
-            $person = $em->getRepository('AppBundle:Person')
-                ->findOneBy([
-                    'id' => $id,
-                ]);
-
+            $personsManager = $this->get('persons.manager');
+            $person = $personsManager->getOnePersonById($id);
+            
             // Check if it exists
             if (!$person) {
                 return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_NO_CONTENT);
-                //            throw $this->createNotFoundException(sprintf('No person found with Id = ' . $id));
             }
 
             $serializer = $this->get('jms_serializer');
@@ -76,7 +70,7 @@ class PersonController extends Controller
     }
 
     /**
-     * @Route("/{id}")
+     * @Route("/edit/{id}")
      * @Method("PUT")
      *
      * @param Request $request
@@ -86,19 +80,15 @@ class PersonController extends Controller
     public function editAction(Request $request, int $id)
     {
         try {
-            $em = $this->getDoctrine()->getManager();
-
-            $person = $em->getRepository('AppBundle:Person')
-                ->findOneBy([
-                    'id' => $id,
-                ]);
+            $personsManager = $this->get('persons.manager');
+            $person = $personsManager->getOnePersonById($id);
 
             if (!$person) {
                 return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_NO_CONTENT);
-                //            throw $this->createNotFoundException(sprintf('No person found with Id = ' . $id));
             }
 
-            return $this->processForm($request, $person);
+            $person = $personsManager->update($request, $person);
+            return new JsonResponse(sprintf("Successfully update person with id: %s", $person->getId()), JsonResponse::HTTP_OK);
         } catch (\Exception $e) {
             return new JsonResponse($e->getMessage(), JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -114,7 +104,10 @@ class PersonController extends Controller
     public function createAction(Request $request)
     {
         try {
-            return $this->processForm($request, new Person());
+            $personsManager = $this->get('persons.manager');
+            $person = $personsManager->create($request);
+
+            return new JsonResponse(sprintf("Successfully created person with id: %s", $person->getId()), JsonResponse::HTTP_OK);
         } catch (\Exception $e) {
             return new JsonResponse($e->getMessage(), JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -130,22 +123,15 @@ class PersonController extends Controller
     public function deleteAction(int $id)
     {
         try {
-            $em = $this->getDoctrine()->getManager();
-            $person = $em->getRepository('AppBundle:Person')
-                ->findOneBy([
-                    'id' => $id,
-                ]);
+            $personsManager = $this->get('persons.manager');
+            $person = $personsManager->getOnePersonById($id);
 
             if (!$person) {
                 return new JsonResponse('No person found with Id = ' . $id, JsonResponse::HTTP_NO_CONTENT);
-                //            throw $this->createNotFoundException(
-                //                'No person found with Id = ' . $id
-                //            );
             }
 
             // Safe to remove
-            $em->remove($person);
-            $em->flush();
+            $personsManager->delete($person);
 
             $response = new JsonResponse("Person deleted", JsonResponse::HTTP_OK);
             $response->headers->set('Location', $this->generateUrl('person_index'));
@@ -155,24 +141,4 @@ class PersonController extends Controller
             return new JsonResponse($e->getMessage(), JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    private function processForm(Request $request, Person $person)
-    {
-        $data = json_decode($request->getContent(), true);
-        $form = $this->createForm(PersonType::class, $person);
-        $form->submit($data);
-
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($person);
-        $em->flush();
-
-        $serializer = $this->get('jms_serializer');
-        $response = new JsonResponse($serializer->toArray($person), JsonResponse::HTTP_CREATED);
-        $response->headers->set('Location', $this->generateUrl('person_show', [
-            'id' => $person->getId()
-        ]));
-
-        return $response;
-    }
-
 }
