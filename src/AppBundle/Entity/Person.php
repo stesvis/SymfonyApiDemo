@@ -8,7 +8,7 @@
 
 namespace AppBundle\Entity;
 
-
+use JMS\Serializer\Annotation as JMS;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -25,16 +25,19 @@ class Person
     private $id;
 
     /**
+     * @JMS\SerializedName(value="firstName")
      * @ORM\Column(type="string")
      */
     private $firstName;
 
     /**
+     * @JMS\SerializedName(value="lastName")
      * @ORM\Column(type="string")
      */
     private $lastName;
 
     /**
+     * @JMS\SerializedName(value="bornAt")
      * @ORM\Column(type="datetime", nullable=true)
      */
     private $bornAt;
